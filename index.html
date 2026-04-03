@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Contest Alerts</title>
+  <meta name="description" content="Super High Alert notifications for coding contests" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+  <link rel="manifest" href="/manifest.json" />
+</head>
+
+<body>
+  <div id="app">
+    <nav class="nav-bar">
+      <button id="nav-dashboard" class="nav-btn active" data-view="dashboard">
+        <span class="icon">🔔</span> Alerts
+      </button>
+      <button id="nav-webview" class="nav-btn" data-view="webview">
+        <span class="icon">🌐</span> Explore
+      </button>
+    </nav>
+
+    <main id="view-container">
+      <!-- Dashboard View -->
+      <section id="view-dashboard" class="view active">
+        <header class="view-header">
+          <h1>Dashboard</h1>
+          <div class="header-controls">
+            <button id="btn-request-perms" class="badge-btn">Grant Permissions</button>
+            <div id="status-badge" class="badge">Checking...</div>
+          </div>
+        </header>
+
+        <form id="api-form" class="card">
+          <div class="input-group">
+            <label for="clist-user">CLIST Username</label>
+            <input type="text" id="clist-user" placeholder="Your username" required />
+          </div>
+          <div class="input-group">
+            <label for="clist-key">API Key</label>
+            <input type="password" id="clist-key" placeholder="Your API key" required />
+            <small><a href="https://clist.by/api/v1/contest/" target="_blank">Get Key Here ↗</a></small>
+          </div>
+          <div class="input-group">
+            <label for="ntfy-topic">ntfy.sh Topic (Optional Remote Alert)</label>
+            <input type="text" id="ntfy-topic" placeholder="e.g. my-private-contests-99" />
+            <small>Install <b>ntfy</b> app and subscribe to this topic for mobile alerts.</small>
+          </div>
+          <button type="submit" class="primary-btn">Save & Start Monitoring</button>
+        </form>
+
+        <section id="alerts-section">
+          <h2>Upcoming Contests</h2>
+          <div id="contests-list" class="list-container">
+            <p class="empty-msg">No contests found. Enter API details above.</p>
+          </div>
+        </section>
+
+        <section id="controls" class="card">
+          <button id="btn-test-alert" class="secondary-btn">Test High Alert</button>
+          <div class="toggle-group">
+            <label class="switch">
+              <input type="checkbox" id="toggle-keep-alive">
+              <span class="slider round"></span>
+            </label>
+            <span>Stay Awake / Background Process</span>
+          </div>
+        </section>
+      </section>
+
+      <!-- Webview View -->
+      <section id="view-webview" class="view">
+        <div class="webview-container">
+          <iframe id="clist-frame" src="about:blank" title="Clist.by Explorer"></iframe>
+          <div id="iframe-fallback" class="hidden">
+            <p>Clist.by is blocked here. Open it in a safe browser instead.</p>
+            <a href="https://clist.by" target="_blank" class="primary-btn">Open Clist.by ↗</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="alert-overlay" class="hidden">
+      <div class="alert-content">
+        <h2 id="alert-title">CONTEST STARTING!</h2>
+        <p id="alert-body">Hackerrank Contest Starts in 1 Hour</p>
+        <button id="btn-stop-alert" class="stop-btn">I AM READY</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
