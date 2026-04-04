@@ -38,4 +38,14 @@ public class MainActivity extends BridgeActivity {
             android.util.Log.e("MainActivity", "Failed to schedule Watchdog: " + e.getMessage());
         }
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Prevent Capacitor WebView from pausing JS execution (e.g. setInterval) when moving to background
+        if (bridge != null && bridge.getWebView() != null) {
+            bridge.getWebView().resumeTimers();
+            bridge.getWebView().onResume();
+        }
+    }
 }

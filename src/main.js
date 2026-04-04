@@ -6,12 +6,14 @@ import { ForegroundService } from '@capawesome-team/capacitor-android-foreground
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { App } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 // --- State ---
 let monitoringInterval = null;
 let lastPeriodicNotifyTime = 0;
 let contests = [];
 let appIsActive = true;
+let expectedNotificationIds = [];
 
 const BatteryOptimization = registerPlugin('BatteryOptimization');
 
@@ -35,14 +37,21 @@ const UI = {
 
 // --- View Navigation ---
 UI.navBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     const target = btn.dataset.view;
+
+    if (target === 'webview') {
+      // Clist blocks iframes, so use Capacitor Browser or fallback to window.open
+      try {
+        await Browser.open({ url: 'https://clist.by/' });
+      } catch (e) {
+        window.open('https://clist.by/', '_blank');
+      }
+      return; // Keep current view active
+    }
+
     UI.navBtns.forEach(b => b.classList.toggle('active', b === btn));
     UI.views.forEach(v => v.classList.toggle('active', v.id === `view-${target}`));
-
-    if (target === 'webview' && UI.webviewFrame.src === 'about:blank') {
-      UI.webviewFrame.src = 'https://clist.by/';
-    }
   });
 });
 
@@ -150,9 +159,11 @@ const initBackgroundService = async (summaryText = 'Monitoring active...') => {
 };
 
 const sendPeriodicSummary = (contests) => {
+  expectedNotificationIds = [];
   const upcoming = contests.filter(c => new Date(c.start) > new Date());
   if (upcoming.length === 0) {
-    Alerts.showSummary("No Upcoming Contests", "Check back later!", true);
+    Alerts.showSummary("No Upcoming Contests", "Check back later!", true, 999999);
+    expectedNotificationIds.push(999999);
     initBackgroundService("No contests found.");
     return;
   }
@@ -166,6 +177,7 @@ const sendPeriodicSummary = (contests) => {
     const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
     const nid = 2000 + (i + 1);
+    expectedNotificationIds.push(nid);
 
     // 👇 numbering bhi reverse
     const displayIndex = page.length - i;
@@ -179,6 +191,23 @@ const sendPeriodicSummary = (contests) => {
   const mirrorText = page.map((c, i) => `[${i + 1}] ${c.event.slice(0, 10)}..`).join(' | ');
   initBackgroundService(mirrorText);
 };
+
+// Start persistency watchdog for notifications
+setInterval(async () => {
+  if (expectedNotificationIds.length === 0 || !Storage.getKeepAlive()) return;
+  try {
+    const { notifications } = await LocalNotifications.getDeliveredNotifications();
+    const deliveredIds = notifications.map(n => n.id);
+    const allPresent = expectedNotificationIds.every(id => deliveredIds.includes(id));
+    
+    if (!allPresent && contests.length > 0) {
+      console.log('👀 Notifications swiped! Restoring them immediately...');
+      sendPeriodicSummary(contests);
+    }
+  } catch (e) {
+    console.error('Watchdog error:', e);
+  }
+}, 5000);
 
 const checkPermissions = async () => {
   try {

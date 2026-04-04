@@ -21,8 +21,13 @@ export const Api = {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      console.log('📦 [API DATA RECEIVED]', data.objects ? data.objects.length : 0, 'items');
-      return data.objects || [];
+      const contests = data.objects || [];
+      contests.forEach(c => {
+        if (c.start && !c.start.includes('Z')) c.start = c.start.replace(' ', 'T') + 'Z';
+        if (c.end && !c.end.includes('Z')) c.end = c.end.replace(' ', 'T') + 'Z';
+      });
+      console.log('📦 [API DATA RECEIVED]', contests.length, 'items');
+      return contests;
     } catch (err) {
       console.error('Fetch error:', err);
       throw err;
